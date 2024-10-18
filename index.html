@@ -6,40 +6,17 @@
     <title>Bangla Calendar</title>
     <link rel="stylesheet" href="./assets/styles.css">
     <script type="module" src="./script.js" defer></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #f3f3f3;
-      }
-      .container {
-        text-align: center;
-      }
-      table {
-        margin-top: 10px;
-        width: 100%;
-        max-width: 400px;
-        border-collapse: collapse;
-      }
-      td {
-        padding: 10px;
-        border: 1px solid #ddd;
-        cursor: pointer;
-      }
-      .hidden {
-        display: none;
-      }
-    </style>
 </head>
 <body>
     <div class="container">
+        <select id="languageSwitcher">
+            <option value="en">English</option>
+            <option value="bn">Bengali</option>
+        </select>
+        <h2 id="monthYear"></h2>
         <button id="prevMonth">Previous</button>
         <button id="nextMonth">Next</button>
         <table id="calendarBody"></table>
-
         <div id="modal" class="hidden">
             <h2 id="modalDate"></h2>
             <p id="modalDetails"></p>
