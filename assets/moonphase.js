@@ -1,13 +1,12 @@
-// MoonPhase.js: Calculate moon phases reliably using astronomical data
+// moonphase.js: Calculate the moon phase based on astronomical formulas
 
 export function getMoonPhase(date) {
-    const synodicMonth = 29.53058867; // Synodic month in days
-    const newMoon = new Date(2000, 0, 6, 18, 14); // Reference new moon date (Jan 6, 2000)
-    
-    const diff = (date - newMoon) / (1000 * 60 * 60 * 24); // Days difference
-    const phase = (diff % synodicMonth) / synodicMonth;
+    const synodicMonth = 29.53058867; // Length of the synodic month
+    const newMoon = new Date(2000, 0, 6, 18, 14); // Reference new moon date
 
-    return phase < 0 ? phase + 1 : phase; // Normalize phase between 0 and 1
+    const diff = (date - newMoon) / (1000 * 60 * 60 * 24); // Days since reference new moon
+    const phase = (diff % synodicMonth) / synodicMonth;
+    return phase < 0 ? phase + 1 : phase; // Normalize between 0 and 1
 }
 
 export function getMoonPhaseName(phase) {
