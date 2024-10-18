@@ -2,82 +2,55 @@ import { getMoonPhase, getMoonPhaseName } from './assets/moonphase.js';
 import { getTideTimes } from './assets/tides.js';
 import { getTithi, getNakshatra } from './assets/tithi_nakshatra.js';
 
-const calendarBody = document.getElementById('calendarBody');
-const languageSwitcher = document.getElementById('languageSwitcher');
-const monthYearDisplay = document.getElementById('monthYear');
-let currentLanguage = 'en'; // Default language
+function renderMoonSymbol(phase) {
+    const moon = document.createElement('div');
+    moon.className = 'moon';
 
-const bengaliMonths = ["বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ", "ভাদ্র", "আশ্বিন", "কার্তিক", "অগ্রহায়ণ", "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"];
-const gregorianMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const phaseAngle = phase * 360; // Convert phase to degrees (0-360)
 
-function getMonthName(month, language) {
-    return language === 'en' ? gregorianMonths[month] : bengaliMonths[month];
-}
+    // Create a dark overlay for phases other than full moon
+    const darkSide = document.createElement('div');
+    darkSide.className = 'moon-overlay';
 
-function renderCalendar(year, month) {
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    calendarBody.innerHTML = ''; // Clear previous entries
-    monthYearDisplay.textContent = `${getMonthName(month, currentLanguage)} ${year}`;
-
-    let date = 1;
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('tr');
-        for (let j = 0; j < 7; j++) {
-            const cell = document.createElement('td');
-
-            if (i === 0 && j < firstDay) {
-                cell.innerHTML = ''; // Empty cell for alignment
-            } else if (date > daysInMonth) {
-                break;
-            } else {
-                const currentDate = new Date(year, month, date);
-                const bengaliDate = convertToBengaliDate(currentDate);
-
-                cell.innerHTML = `
-                    <div>${date}</div>
-                    <div>${bengaliDate}</div>
-                `;
-                cell.addEventListener('click', () => showDetails(currentDate));
-                date++;
-            }
-            row.appendChild(cell);
-        }
-        calendarBody.appendChild(row);
+    if (phase <= 0.5) {
+        // Waxing phases (New Moon to Full Moon)
+        darkSide.style.clipPath = `circle(50% at ${100 - phase * 200}% 50%)`;
+    } else {
+        // Waning phases (Full Moon to New Moon)
+        darkSide.style.clipPath = `circle(50% at ${phase * 200 - 100}% 50%)`;
     }
+
+    moon.appendChild(darkSide);
+    return moon;
 }
 
 function showDetails(date) {
     const moonPhase = getMoonPhase(date);
+    const moonPhaseName = getMoonPhaseName(moonPhase);
     const tideTimes = getTideTimes(date);
-    const tithi = tithiNames[getTithi(date) - 1];
-    const nakshatra = nakshatraNames[getNakshatra(date) - 1];
+    const tithi = getTithi(date);
+    const nakshatra = getNakshatra(date);
 
-    fetch(`https://some-moon-api.com?phase=${moonPhase}`)
-        .then(response => response.json())
-        .then(data => {
-            const moonImage = data.image; // Get moon phase image from API
-            const modal = document.getElementById('modal');
-            const modalDate = document.getElementById('modalDate');
-            const modalDetails = document.getElementById('modalDetails');
+    const modal = document.getElementById('modal');
+    const modalDate = document.getElementById('modalDate');
+    const modalDetails = document.getElementById('modalDetails');
 
-            modalDate.textContent = `Details for ${date.toDateString()}`;
-            modalDetails.innerHTML = `
-                <img src="${moonImage}" alt="Moon Phase">
-                <strong>Moon Phase:</strong> ${getMoonPhaseName(moonPhase)}<br>
-                <strong>Tithi:</strong> ${tithi}<br>
-                <strong>Nakshatra:</strong> ${nakshatra}<br>
-                <strong>High Tides:</strong> ${tideTimes.highTides.join(', ')}<br>
-                <strong>Low Tides:</strong> ${tideTimes.lowTides.join(', ')}
-            `;
-            modal.classList.remove('hidden');
-        });
+    const moonSymbol = renderMoonSymbol(moonPhase);
+
+    modalDate.textContent = `Details for ${date.toDateString()}`;
+    modalDetails.innerHTML = `
+        <strong>Moon Phase:</strong> ${moonPhaseName}<br>
+        <strong>Tithi:</strong> ${tithi}<br>
+        <strong>Nakshatra:</strong> ${nakshatra}<br>
+        <strong>High Tides:</strong> ${tideTimes.highTides.join(', ')}<br>
+        <strong>Low Tides:</strong> ${tideTimes.lowTides.join(', ')}
+    `;
+    modalDetails.prepend(moonSymbol); // Add moon symbol to the modal
+
+    modal.classList.remove('hidden');
 }
 
-languageSwitcher.addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
-    renderCalendar(new Date().getFullYear(), new Date().getMonth());
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date();
+    renderCalendar(today.getFullYear(), today.getMonth());
 });
-
-const today = new Date();
-renderCalendar(today.getFullYear(), today.getMonth());
