@@ -1,9 +1,9 @@
-// tides.js: Approximate tide times based on moon phase and lunar day cycle
+// tides.js: Calculate approximate tide times based on lunar phases
 
 import { getMoonPhase } from './moonphase.js';
 
 export function getTideTimes(date) {
-    const lunarDay = 24 * 60 + 50; // Lunar day in minutes
+    const lunarDayInMinutes = 24 * 60 + 50; // A lunar day is 24 hours 50 minutes
     const moonPhase = getMoonPhase(date);
 
     const highTide1 = new Date(date);
