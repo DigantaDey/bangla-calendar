@@ -2,50 +2,41 @@ import {
     getMoonPhase, 
     getMoonPhaseName 
 } from './assets/moonphase.js';
-
 import { 
     getTideTimes 
 } from './assets/tides.js';
-
 import { 
     getTithiName, 
     getNakshatraName 
 } from './assets/tithi_nakshatra.js';
 
-const bengaliMonths = [
-    "বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ",
-    "ভাদ্র", "আশ্বিন", "কার্তিক", "অগ্রহায়ণ",
-    "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"
-];
-
 const calendarBody = document.getElementById('calendarBody');
 const monthYearDisplay = document.getElementById('monthYear');
 const languageSwitcher = document.getElementById('languageSwitcher');
-let currentLanguage = 'en'; // Default to English
+let currentLanguage = 'en'; // Default language
 
-// Calculate Julian Day to determine solar transitions
-function julianDay(year, month, day) {
-    if (month <= 2) {
-        year -= 1;
-        month += 12;
+const englishMonthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
+const bengaliLabels = {
+    previous: "পূর্ববর্তী",
+    next: "পরবর্তী",
+    months: [
+        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", 
+        "মে", "জুন", "জুলাই", "আগস্ট", 
+        "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+    ]
+};
+
+// Dynamically display the correct month and year
+function getMonthName(month) {
+    if (currentLanguage === 'en') {
+        return englishMonthNames[month];
+    } else {
+        return bengaliLabels.months[month];
     }
-    const A = Math.floor(year / 100);
-    const B = 2 - A + Math.floor(A / 4);
-    return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
-}
-
-// Calculate Poila Boishakh date dynamically
-function getPoilaBoishakh(year) {
-    const jdApril14 = julianDay(year, 4, 14);
-    const jdApril15 = julianDay(year, 4, 15);
-
-    const longitudeApril14 = jdApril14 % 360;
-    const longitudeApril15 = jdApril15 % 360;
-
-    if (Math.floor(longitudeApril15 / 30) === 0) {
-        return new Date(year, 3, 15);
-    }
-    return new Date(year, 3, 14);
 }
 
 // Highlight today's date
@@ -58,33 +49,13 @@ function isToday(date) {
     );
 }
 
-// Convert Gregorian date to Bengali date
-function convertToBengaliDate(gregorianDate) {
-    const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
-    let bengaliYear = gregorianDate.getFullYear() - 593;
-
-    if (gregorianDate < poilaBoishakh) {
-        bengaliYear -= 1;
-    }
-
-    const daysSinceBoishakh = Math.floor((gregorianDate - poilaBoishakh) / (1000 * 60 * 60 * 24));
-    const monthIndex = Math.floor(daysSinceBoishakh / 30) % 12;
-    const bengaliDay = (daysSinceBoishakh % 30) + 1;
-
-    return {
-        day: bengaliDay,
-        month: bengaliMonths[monthIndex],
-        year: bengaliYear
-    };
-}
-
-// Render calendar for the selected year and month
+// Render the calendar for the selected year and month
 function renderCalendar(year, month) {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    calendarBody.innerHTML = ''; // Clear previous calendar
+    calendarBody.innerHTML = ''; // Clear previous entries
 
-    monthYearDisplay.textContent = `${getMonthName(month, currentLanguage)} ${year}`;
+    monthYearDisplay.textContent = `${getMonthName(month)} ${year}`;
 
     let date = 1;
     for (let i = 0; i < 6; i++) {
@@ -97,17 +68,10 @@ function renderCalendar(year, month) {
                 break;
             } else {
                 const currentDate = new Date(year, month, date);
-                const { day, month: bengaliMonth, year: bengaliYear } = convertToBengaliDate(currentDate);
-
-                cell.innerHTML = `
-                    <div>${date}</div>
-                    <div>${day} ${bengaliMonth}, ${bengaliYear}</div>
-                `;
-
+                cell.innerHTML = `<div>${date}</div>`;
                 if (isToday(currentDate)) {
                     cell.classList.add('highlight'); // Highlight today's date
                 }
-
                 cell.addEventListener('click', () => showDetails(currentDate));
                 date++;
             }
@@ -122,8 +86,8 @@ function showDetails(date) {
     const moonPhase = getMoonPhase(date);
     const moonPhaseName = getMoonPhaseName(moonPhase);
     const tideTimes = getTideTimes(date);
-    const tithiName = getTithiName(date);
-    const nakshatraName = getNakshatraName(date);
+    const tithiName = getTithiName(date) || "N/A";
+    const nakshatraName = getNakshatraName(date) || "N/A";
 
     const modal = document.getElementById('modal');
     const modalDate = document.getElementById('modalDate');
@@ -141,21 +105,49 @@ function showDetails(date) {
     modal.classList.remove('hidden');
 }
 
-// Get month name based on selected language
-function getMonthName(month, language) {
-    const englishMonths = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-    return language === 'en' ? englishMonths[month] : bengaliMonths[month];
+// Handle language switching for labels (like "Previous" and "Next")
+function updateLabels() {
+    const prevButton = document.getElementById('prevMonth');
+    const nextButton = document.getElementById('nextMonth');
+
+    if (currentLanguage === 'bn') {
+        prevButton.textContent = bengaliLabels.previous;
+        nextButton.textContent = bengaliLabels.next;
+    } else {
+        prevButton.textContent = "Previous";
+        nextButton.textContent = "Next";
+    }
 }
 
 // Handle language switch
 languageSwitcher.addEventListener('change', (e) => {
     currentLanguage = e.target.value;
+    updateLabels();
     renderCalendar(new Date().getFullYear(), new Date().getMonth());
 });
 
-// Initialize calendar with the current month
+// Initialize the calendar with the current month
 const today = new Date();
 renderCalendar(today.getFullYear(), today.getMonth());
+updateLabels();
+
+// Event listeners for navigation buttons
+document.getElementById('prevMonth').addEventListener('click', () => {
+    let month = today.getMonth() - 1;
+    let year = today.getFullYear();
+    if (month < 0) {
+        month = 11;
+        year--;
+    }
+    renderCalendar(year, month);
+});
+
+document.getElementById('nextMonth').addEventListener('click', () => {
+    let month = today.getMonth() + 1;
+    let year = today.getFullYear();
+    if (month > 11) {
+        month = 0;
+        year++;
+    }
+    renderCalendar(year, month);
+});
