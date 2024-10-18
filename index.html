@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangla Calendar</title>
+    <link rel="stylesheet" href="./assets/styles.css">
+    <script type="module" src="./script.js" defer></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f3f3f3;
+      }
+      .container {
+        text-align: center;
+      }
+      table {
+        margin-top: 10px;
+        width: 100%;
+        max-width: 400px;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="prevMonth">Previous</button>
+        <button id="nextMonth">Next</button>
+        <table id="calendarBody"></table>
+
+        <div id="modal" class="hidden">
+            <h2 id="modalDate"></h2>
+            <p id="modalDetails"></p>
+            <button onclick="document.getElementById('modal').classList.add('hidden')">Close</button>
+        </div>
+    </div>
+</body>
+</html>
