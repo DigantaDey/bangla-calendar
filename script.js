@@ -1,6 +1,16 @@
-import { getMoonPhase, getMoonPhaseName } from './assets/moonphase.js';
-import { getTideTimes } from './assets/tides.js';
-import { getTithi, getNakshatra } from './assets/tithi_nakshatra.js';
+import { 
+    getMoonPhase, 
+    getMoonPhaseName 
+} from './assets/moonphase.js';
+
+import { 
+    getTideTimes 
+} from './assets/tides.js';
+
+import { 
+    getTithiName, 
+    getNakshatraName 
+} from './assets/tithi_nakshatra.js';
 
 const bengaliMonths = [
     "বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ",
@@ -8,28 +18,12 @@ const bengaliMonths = [
     "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"
 ];
 
-const tithiNames = [
-    "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami",
-    "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
-    "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi",
-    "Purnima", "Amavasya"
-];
-
-const nakshatraNames = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira",
-    "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha",
-    "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
-    "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula",
-    "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishtha",
-    "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
-];
-
 const calendarBody = document.getElementById('calendarBody');
 const monthYearDisplay = document.getElementById('monthYear');
 const languageSwitcher = document.getElementById('languageSwitcher');
-let currentLanguage = 'en'; // Default language: English
+let currentLanguage = 'en'; // Default to English
 
-// Calculate Julian Day to determine solar transit
+// Calculate Julian Day to determine solar transitions
 function julianDay(year, month, day) {
     if (month <= 2) {
         year -= 1;
@@ -40,36 +34,21 @@ function julianDay(year, month, day) {
     return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
 }
 
-// Calculate sun's longitude for accurate Mesh Sankranti calculation
-function sunLongitude(jd) {
-    const n = jd - 2451545.0; // Days since J2000.0 epoch
-    const L = (280.460 + 0.9856474 * n) % 360; // Mean longitude
-    const g = (357.528 + 0.9856003 * n) % 360; // Mean anomaly
-    const lambda = L + 1.915 * Math.sin(toRadians(g)) + 0.02 * Math.sin(toRadians(2 * g));
-    return lambda % 360;
-}
-
-// Helper function to convert degrees to radians
-function toRadians(degrees) {
-    return (degrees * Math.PI) / 180;
-}
-
-// Determine Poila Boishakh (Bengali New Year) date dynamically
+// Calculate Poila Boishakh date dynamically
 function getPoilaBoishakh(year) {
-    let jdApril14 = julianDay(year, 4, 14); // April 14 Julian Day
-    let jdApril15 = julianDay(year, 4, 15); // April 15 Julian Day
+    const jdApril14 = julianDay(year, 4, 14);
+    const jdApril15 = julianDay(year, 4, 15);
 
-    const longitudeApril14 = sunLongitude(jdApril14);
-    const longitudeApril15 = sunLongitude(jdApril15);
+    const longitudeApril14 = jdApril14 % 360;
+    const longitudeApril15 = jdApril15 % 360;
 
-    // If the sun enters Aries (0°) on April 15, New Year is on April 15
     if (Math.floor(longitudeApril15 / 30) === 0) {
-        return new Date(year, 3, 15); // April 15
+        return new Date(year, 3, 15);
     }
-    return new Date(year, 3, 14); // April 14
+    return new Date(year, 3, 14);
 }
 
-// Check if the date is today
+// Highlight today's date
 function isToday(date) {
     const today = new Date();
     return (
@@ -79,7 +58,7 @@ function isToday(date) {
     );
 }
 
-// Convert Gregorian date to Bengali solar date
+// Convert Gregorian date to Bengali date
 function convertToBengaliDate(gregorianDate) {
     const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
     let bengaliYear = gregorianDate.getFullYear() - 593;
@@ -99,11 +78,11 @@ function convertToBengaliDate(gregorianDate) {
     };
 }
 
-// Render the calendar for the given year and month
+// Render calendar for the selected year and month
 function renderCalendar(year, month) {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    calendarBody.innerHTML = ''; // Clear previous entries
+    calendarBody.innerHTML = ''; // Clear previous calendar
 
     monthYearDisplay.textContent = `${getMonthName(month, currentLanguage)} ${year}`;
 
@@ -112,9 +91,8 @@ function renderCalendar(year, month) {
         const row = document.createElement('tr');
         for (let j = 0; j < 7; j++) {
             const cell = document.createElement('td');
-
             if (i === 0 && j < firstDay) {
-                cell.innerHTML = ''; // Empty cell
+                cell.innerHTML = ''; // Empty cell for alignment
             } else if (date > daysInMonth) {
                 break;
             } else {
@@ -144,8 +122,8 @@ function showDetails(date) {
     const moonPhase = getMoonPhase(date);
     const moonPhaseName = getMoonPhaseName(moonPhase);
     const tideTimes = getTideTimes(date);
-    const tithi = tithiNames[getTithi(date) - 1];
-    const nakshatra = nakshatraNames[getNakshatra(date) - 1];
+    const tithiName = getTithiName(date);
+    const nakshatraName = getNakshatraName(date);
 
     const modal = document.getElementById('modal');
     const modalDate = document.getElementById('modalDate');
@@ -154,8 +132,8 @@ function showDetails(date) {
     modalDate.textContent = `Details for ${date.toDateString()}`;
     modalDetails.innerHTML = `
         <strong>Moon Phase:</strong> ${moonPhaseName}<br>
-        <strong>Tithi:</strong> ${tithi}<br>
-        <strong>Nakshatra:</strong> ${nakshatra}<br>
+        <strong>Tithi:</strong> ${tithiName}<br>
+        <strong>Nakshatra:</strong> ${nakshatraName}<br>
         <strong>High Tides:</strong> ${tideTimes.highTides.join(', ')}<br>
         <strong>Low Tides:</strong> ${tideTimes.lowTides.join(', ')}
     `;
