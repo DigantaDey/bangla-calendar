@@ -73,15 +73,15 @@ function sunLongitude(jd) {
 //         : new Date(year, 3, 14);
 // }
 
-// // Highlight today’s date
-// function isToday(date) {
-//     const today = new Date();
-//     return (
-//         date.getDate() === today.getDate() &&
-//         date.getMonth() === today.getMonth() &&
-//         date.getFullYear() === today.getFullYear()
-//     );
-// }
+// Highlight today’s date
+function isToday(date) {
+    const today = new Date();
+    return (
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+    );
+}
 
 // Calculate the Poila Boishakh (Bengali New Year) based on the solar transit into Aries
 
