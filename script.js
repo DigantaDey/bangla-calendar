@@ -2,15 +2,33 @@ import {
     getMoonPhase, 
     getMoonPhaseName 
 } from './assets/moonphase.js';
-
 import { 
     getTideTimes 
 } from './assets/tides.js';
-
 import { 
     getTithiName, 
     getNakshatraName 
 } from './assets/tithi_nakshatra.js';
+
+const calendarBody = document.getElementById('calendarBody');
+const monthYearDisplay = document.getElementById('monthYear');
+const languageSwitcher = document.getElementById('languageSwitcher');
+let currentLanguage = 'en'; // Default to English
+
+const englishMonthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
+const bengaliLabels = {
+    previous: "পূর্ববর্তী",
+    next: "পরবর্তী",
+    months: [
+        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল",
+        "মে", "জুন", "জুলাই", "আগস্ট",
+        "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+    ]
+};
 
 const bengaliMonths = [
     "বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ",
@@ -18,12 +36,7 @@ const bengaliMonths = [
     "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"
 ];
 
-const calendarBody = document.getElementById('calendarBody');
-const monthYearDisplay = document.getElementById('monthYear');
-const languageSwitcher = document.getElementById('languageSwitcher');
-let currentLanguage = 'en'; // Default to English
-
-// Calculate Julian Day to determine solar transitions
+// Calculate Julian Day for astronomical calculations
 function julianDay(year, month, day) {
     if (month <= 2) {
         year -= 1;
@@ -34,21 +47,19 @@ function julianDay(year, month, day) {
     return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
 }
 
-// Calculate Poila Boishakh date dynamically
+// Dynamically calculate Poila Boishakh (New Year) date for the year
 function getPoilaBoishakh(year) {
     const jdApril14 = julianDay(year, 4, 14);
     const jdApril15 = julianDay(year, 4, 15);
-
     const longitudeApril14 = jdApril14 % 360;
     const longitudeApril15 = jdApril15 % 360;
 
-    if (Math.floor(longitudeApril15 / 30) === 0) {
-        return new Date(year, 3, 15);
-    }
-    return new Date(year, 3, 14);
+    return Math.floor(longitudeApril15 / 30) === 0
+        ? new Date(year, 3, 15)
+        : new Date(year, 3, 14);
 }
 
-// Highlight today's date
+// Highlight today’s date
 function isToday(date) {
     const today = new Date();
     return (
@@ -58,7 +69,7 @@ function isToday(date) {
     );
 }
 
-// Convert Gregorian date to Bengali date
+// Convert Gregorian date to Bengali calendar date
 function convertToBengaliDate(gregorianDate) {
     const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
     let bengaliYear = gregorianDate.getFullYear() - 593;
@@ -78,13 +89,13 @@ function convertToBengaliDate(gregorianDate) {
     };
 }
 
-// Render calendar for the selected year and month
+// Render the calendar for the selected year and month
 function renderCalendar(year, month) {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    calendarBody.innerHTML = ''; // Clear previous calendar
+    calendarBody.innerHTML = ''; // Clear previous entries
 
-    monthYearDisplay.textContent = `${getMonthName(month, currentLanguage)} ${year}`;
+    monthYearDisplay.textContent = `${getMonthName(month)} ${year}`;
 
     let date = 1;
     for (let i = 0; i < 6; i++) {
@@ -105,7 +116,7 @@ function renderCalendar(year, month) {
                 `;
 
                 if (isToday(currentDate)) {
-                    cell.classList.add('highlight'); // Highlight today's date
+                    cell.classList.add('highlight'); // Highlight today’s date
                 }
 
                 cell.addEventListener('click', () => showDetails(currentDate));
@@ -122,8 +133,8 @@ function showDetails(date) {
     const moonPhase = getMoonPhase(date);
     const moonPhaseName = getMoonPhaseName(moonPhase);
     const tideTimes = getTideTimes(date);
-    const tithiName = getTithiName(date);
-    const nakshatraName = getNakshatraName(date);
+    const tithiName = getTithiName(date) || "N/A";
+    const nakshatraName = getNakshatraName(date) || "N/A";
 
     const modal = document.getElementById('modal');
     const modalDate = document.getElementById('modalDate');
@@ -141,21 +152,40 @@ function showDetails(date) {
     modal.classList.remove('hidden');
 }
 
-// Get month name based on selected language
-function getMonthName(month, language) {
-    const englishMonths = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-    return language === 'en' ? englishMonths[month] : bengaliMonths[month];
+// Get month name based on current language
+function getMonthName(month) {
+    return currentLanguage === 'en'
+        ? englishMonthNames[month]
+        : bengaliLabels.months[month];
 }
 
-// Handle language switch
+// Handle language switch event
 languageSwitcher.addEventListener('change', (e) => {
     currentLanguage = e.target.value;
     renderCalendar(new Date().getFullYear(), new Date().getMonth());
 });
 
-// Initialize calendar with the current month
+// Initialize the calendar with the current month
 const today = new Date();
 renderCalendar(today.getFullYear(), today.getMonth());
+
+// Event listeners for navigation buttons
+document.getElementById('prevMonth').addEventListener('click', () => {
+    let month = today.getMonth() - 1;
+    let year = today.getFullYear();
+    if (month < 0) {
+        month = 11;
+        year--;
+    }
+    renderCalendar(year, month);
+});
+
+document.getElementById('nextMonth').addEventListener('click', () => {
+    let month = today.getMonth() + 1;
+    let year = today.getFullYear();
+    if (month > 11) {
+        month = 0;
+        year++;
+    }
+    renderCalendar(year, month);
+});
