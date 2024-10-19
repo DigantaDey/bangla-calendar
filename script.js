@@ -115,26 +115,6 @@ function getPoilaBoishakh(year) {
     return new Date(year, 3, 14); // April 14
 }
 
-// // Convert Gregorian date to Bengali calendar date
-// function convertToBengaliDate(gregorianDate) {
-//     const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
-//     let bengaliYear = gregorianDate.getFullYear() - 593;
-
-//     if (gregorianDate < poilaBoishakh) {
-//         bengaliYear -= 1;
-//     }
-
-//     const daysSinceBoishakh = Math.floor((gregorianDate - poilaBoishakh) / (1000 * 60 * 60 * 24));
-//     const monthIndex = Math.floor(daysSinceBoishakh / 30) % 12;
-//     const bengaliDay = (daysSinceBoishakh % 30) + 1;
-
-//     return {
-//         day: bengaliDay,
-//         month: bengaliMonths[monthIndex],
-//         year: bengaliYear
-//     };
-// }
-
 // Define Bengali month lengths: Regular year and Leap year (some months can have 32 days)
 const bengaliMonthLengths = {
     regular: [31, 31, 31, 31, 30, 30, 30, 30, 30, 30, 30, 30], // Baishakh to Chaitra
@@ -146,12 +126,81 @@ function isBengaliLeapYear(year) {
     return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 }
 
-// Convert a Gregorian date to the corresponding Bengali date
+// // Convert a Gregorian date to the corresponding Bengali date
+// function convertToBengaliDate(gregorianDate) {
+//     const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
+//     let bengaliYear = gregorianDate.getFullYear() - 593;
+
+//     // If the Gregorian date is before Poila Boishakh, it belongs to the previous Bengali year
+//     if (gregorianDate < poilaBoishakh) {
+//         bengaliYear -= 1;
+//     }
+
+//     // Calculate the number of days since Poila Boishakh
+//     const daysSinceBoishakh = Math.floor((gregorianDate - poilaBoishakh) / (1000 * 60 * 60 * 24));
+
+//     // Select the correct month lengths based on whether it's a leap year
+//     const monthLengths = isBengaliLeapYear(bengaliYear)
+//         ? bengaliMonthLengths.leap
+//         : bengaliMonthLengths.regular;
+
+//     // Calculate the Bengali month and day
+//     let monthIndex = 0;
+//     let remainingDays = daysSinceBoishakh;
+
+//     // Distribute the days across the months
+//     while (remainingDays >= monthLengths[monthIndex]) {
+//         remainingDays -= monthLengths[monthIndex];
+//         monthIndex = (monthIndex + 1) % 12; // Wrap around to the next month
+//     }
+
+//     const bengaliDay = remainingDays + 1; // Day within the month
+//     const bengaliMonth = bengaliMonths[monthIndex]; // Get the Bengali month name
+
+//     return {
+//         day: bengaliDay,
+//         month: bengaliMonth,
+//         year: bengaliYear
+//     };
+// }
+
+// Helper to get the Julian day of the solar transit into a specific zodiac sign
+function getSolarTransit(year, sign) {
+    const jd = julianDay(year, 4, 14); // Start checking from April 14
+    let transitDay = jd;
+
+    // Check daily until the sun enters the desired zodiac sign (30° * sign)
+    while (Math.floor(sunLongitude(transitDay) / 30) !== sign) {
+        transitDay++;
+    }
+
+    return transitDay; // Return the Julian day when transit occurs
+}
+
+// Calculate dynamic month lengths based on solar transits
+function calculateMonthLengths(bengaliYear) {
+    const monthStartDays = [];
+
+    // Calculate the Julian day of solar transits for each month (Baishakh to Chaitra)
+    for (let i = 0; i < 12; i++) {
+        monthStartDays.push(getSolarTransit(bengaliYear + 593, i));
+    }
+
+    // Calculate the length of each month in days
+    const monthLengths = monthStartDays.map((start, index) => {
+        const nextStart = monthStartDays[(index + 1) % 12];
+        return nextStart - start;
+    });
+
+    return monthLengths;
+}
+
+// Convert Gregorian date to Bengali calendar date using dynamic month lengths
 function convertToBengaliDate(gregorianDate) {
     const poilaBoishakh = getPoilaBoishakh(gregorianDate.getFullYear());
     let bengaliYear = gregorianDate.getFullYear() - 593;
 
-    // If the Gregorian date is before Poila Boishakh, it belongs to the previous Bengali year
+    // Adjust the Bengali year if the Gregorian date is before Poila Boishakh
     if (gregorianDate < poilaBoishakh) {
         bengaliYear -= 1;
     }
@@ -159,23 +208,20 @@ function convertToBengaliDate(gregorianDate) {
     // Calculate the number of days since Poila Boishakh
     const daysSinceBoishakh = Math.floor((gregorianDate - poilaBoishakh) / (1000 * 60 * 60 * 24));
 
-    // Select the correct month lengths based on whether it's a leap year
-    const monthLengths = isBengaliLeapYear(bengaliYear)
-        ? bengaliMonthLengths.leap
-        : bengaliMonthLengths.regular;
+    // Calculate month lengths dynamically based on solar transits
+    const monthLengths = calculateMonthLengths(bengaliYear);
 
-    // Calculate the Bengali month and day
+    // Determine the Bengali month and day
     let monthIndex = 0;
     let remainingDays = daysSinceBoishakh;
 
-    // Distribute the days across the months
     while (remainingDays >= monthLengths[monthIndex]) {
         remainingDays -= monthLengths[monthIndex];
-        monthIndex = (monthIndex + 1) % 12; // Wrap around to the next month
+        monthIndex = (monthIndex + 1) % 12;
     }
 
-    const bengaliDay = remainingDays + 1; // Day within the month
-    const bengaliMonth = bengaliMonths[monthIndex]; // Get the Bengali month name
+    const bengaliDay = remainingDays + 1;
+    const bengaliMonth = bengaliMonths[monthIndex];
 
     return {
         day: bengaliDay,
