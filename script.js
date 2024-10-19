@@ -52,13 +52,25 @@ function toRadians(degrees) {
     return (degrees * Math.PI) / 180;
 }
 
-// Sun's ecliptic longitude based on Julian Day
+// Calculate the sun's ecliptic longitude for a given Julian Day
 function sunLongitude(jd) {
-    const n = jd - 2451545.0; // Days since the J2000.0 epoch
-    const L = (280.460 + 0.9856474 * n) % 360; // Mean longitude of the Sun
-    const g = (357.528 + 0.9856003 * n) % 360; // Mean anomaly
-    const lambda = L + 1.915 * Math.sin(toRadians(g)) + 0.02 * Math.sin(toRadians(2 * g));
-    return lambda % 360; // Sun's ecliptic longitude
+    const n = jd - 2451545.0; // Days since J2000 epoch
+
+    // Mean longitude of the sun (L) at the epoch, adjusted daily
+    const L = (280.46646 + 0.98564736 * n) % 360;
+
+    // Mean anomaly of the sun (g), adjusted daily
+    const g = (357.52911 + 0.98560028 * n) % 360;
+
+    // Convert degrees to radians for trigonometric functions
+    const gRad = toRadians(g);
+
+    // Calculate the true ecliptic longitude (lambda)
+    const lambda = L + 1.914602 * Math.sin(gRad) + 
+                         0.019993 * Math.sin(2 * gRad) + 
+                         0.000289 * Math.sin(3 * gRad);
+
+    return lambda % 360; // Return value within the range [0, 360)
 }
 
 // // Dynamically calculate Poila Boishakh (New Year) date for the year
